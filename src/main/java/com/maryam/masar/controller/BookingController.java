@@ -11,6 +11,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import com.maryam.masar.entity.BookingStatus;
+import org.springframework.data.domain.Page;
 @RestController
 @RequestMapping("/api/v1/bookings")
 public class BookingController {
@@ -36,6 +38,27 @@ public class BookingController {
                                                          @AuthenticationPrincipal CustomUserDetails userDetails) {
         Passenger currentUser = userDetails.getPassenger();
         BookingResponse response = bookingService.cancelBooking(id, currentUser);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('PASSENGER')")
+    public ResponseEntity<Page<BookingResponse>> getMyBookings(
+            @RequestParam(required = false) BookingStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Passenger currentUser = userDetails.getPassenger();
+        Page<BookingResponse> bookings = bookingService.getMyBookings(currentUser, status, page, size);
+        return ResponseEntity.ok(bookings);
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('PASSENGER')")
+    public ResponseEntity<BookingResponse> getMyBookingById(@PathVariable Long id,
+                                                            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Passenger currentUser = userDetails.getPassenger();
+        BookingResponse response = bookingService.getMyBookingById(id, currentUser);
         return ResponseEntity.ok(response);
     }
 }

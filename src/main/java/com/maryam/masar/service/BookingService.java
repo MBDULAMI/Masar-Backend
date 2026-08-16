@@ -16,6 +16,9 @@ import java.security.SecureRandom;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @Service
 public class BookingService {
@@ -212,5 +215,29 @@ public class BookingService {
                 booking.getCreatedAt(),
                 ticketResponses
         );
+    }
+
+    public Page<BookingResponse> getMyBookings(Passenger currentUser, BookingStatus status, int page, int size) {
+        int safeSize = Math.min(size, 50);
+        Pageable pageable = PageRequest.of(page, safeSize);
+
+        Page<Booking> bookings = (status != null)
+                ? bookingRepository.findByPassenger_IdAndStatus(currentUser.getId(), status, pageable)
+                : bookingRepository.findByPassenger_Id(currentUser.getId(), pageable);
+
+        return bookings.map(b -> toBookingResponse(b, ticketRepository.findByBooking_Id(b.getId())));
+    }
+
+    public BookingResponse getMyBookingById(Long bookingId, Passenger currentUser) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new NotFoundException("Booking not found"));
+
+        // R8: ownership check — same error whether missing or not yours
+        if (!booking.getPassenger().getId().equals(currentUser.getId())) {
+            throw new NotFoundException("Booking not found");
+        }
+
+        List<Ticket> tickets = ticketRepository.findByBooking_Id(booking.getId());
+        return toBookingResponse(booking, tickets);
     }
 }

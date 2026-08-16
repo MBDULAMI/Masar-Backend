@@ -14,6 +14,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
+import com.maryam.masar.entity.Passenger;
+import com.maryam.masar.exception.NotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 @Service
 public class WalletService {
 
@@ -52,5 +57,28 @@ public class WalletService {
                 null,
                 saved.getCreatedAt()
         );
+    }
+
+    public BigDecimal getMyBalance(Passenger currentUser) {
+        Passenger passenger = passengerRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new NotFoundException("Passenger not found"));
+        return passenger.getWalletBalance();
+    }
+
+    public Page<WalletTransactionResponse> getMyLedger(Passenger currentUser, int page, int size) {
+        int safeSize = Math.min(size, 50);
+        Pageable pageable = PageRequest.of(page, safeSize);
+
+        Page<WalletTransaction> transactions = walletTransactionRepository
+                .findByPassenger_IdOrderByCreatedAtDesc(currentUser.getId(), pageable);
+
+        return transactions.map(t -> new WalletTransactionResponse(
+                t.getId(),
+                t.getType().name(),
+                t.getAmount(),
+                t.getBalanceAfter(),
+                t.getBooking() != null ? t.getBooking().getId() : null,
+                t.getCreatedAt()
+        ));
     }
 }
