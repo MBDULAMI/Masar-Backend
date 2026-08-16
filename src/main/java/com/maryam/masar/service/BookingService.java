@@ -20,6 +20,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import com.maryam.masar.entity.Operator;
+import com.maryam.masar.repository.OperatorRepository;
+
 @Service
 public class BookingService {
 
@@ -28,6 +31,7 @@ public class BookingService {
     private final PassengerRepository passengerRepository;
     private final TicketRepository ticketRepository;
     private final WalletTransactionRepository walletTransactionRepository;
+    private final OperatorRepository operatorRepository;
 
     private static final String REF_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -36,12 +40,14 @@ public class BookingService {
                           TripRepository tripRepository,
                           PassengerRepository passengerRepository,
                           TicketRepository ticketRepository,
-                          WalletTransactionRepository walletTransactionRepository) {
+                          WalletTransactionRepository walletTransactionRepository,
+                          OperatorRepository operatorRepository) {
         this.bookingRepository = bookingRepository;
         this.tripRepository = tripRepository;
         this.passengerRepository = passengerRepository;
         this.ticketRepository = ticketRepository;
         this.walletTransactionRepository = walletTransactionRepository;
+        this.operatorRepository = operatorRepository;
     }
 
     @Transactional
@@ -120,6 +126,7 @@ public class BookingService {
 
         return toBookingResponse(savedBooking, tickets);
     }
+
     @Transactional
     public BookingResponse cancelBooking(Long bookingId, Passenger currentUser) {
         Booking booking = bookingRepository.findById(bookingId)
@@ -181,6 +188,42 @@ public class BookingService {
         return toBookingResponse(savedBooking, tickets);
     }
 
+    public Page<BookingResponse> getMyBookings(Passenger currentUser, BookingStatus status, int page, int size) {
+        int safeSize = Math.min(size, 50);
+        Pageable pageable = PageRequest.of(page, safeSize);
+
+        Page<Booking> bookings = (status != null)
+                ? bookingRepository.findByPassenger_IdAndStatus(currentUser.getId(), status, pageable)
+                : bookingRepository.findByPassenger_Id(currentUser.getId(), pageable);
+
+        return bookings.map(b -> toBookingResponse(b, ticketRepository.findByBooking_Id(b.getId())));
+    }
+
+    public BookingResponse getMyBookingById(Long bookingId, Passenger currentUser) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new NotFoundException("Booking not found"));
+
+        // R8: ownership check — same error whether missing or not yours
+        if (!booking.getPassenger().getId().equals(currentUser.getId())) {
+            throw new NotFoundException("Booking not found");
+        }
+
+        List<Ticket> tickets = ticketRepository.findByBooking_Id(booking.getId());
+        return toBookingResponse(booking, tickets);
+    }
+
+    public Page<BookingResponse> getBookingsForOperator(Passenger currentUser, int page, int size) {
+        Operator operator = operatorRepository.findByOwner_Id(currentUser.getId())
+                .orElseThrow(() -> new NotFoundException("No operator company found for this account"));
+
+        int safeSize = Math.min(size, 50);
+        Pageable pageable = PageRequest.of(page, safeSize);
+
+        Page<Booking> bookings = bookingRepository.findByTrip_Operator_Id(operator.getId(), pageable);
+
+        return bookings.map(b -> toBookingResponse(b, ticketRepository.findByBooking_Id(b.getId())));
+    }
+
     private String generateReference() {
         StringBuilder sb = new StringBuilder("MSR-");
         for (int i = 0; i < 6; i++) {
@@ -215,29 +258,5 @@ public class BookingService {
                 booking.getCreatedAt(),
                 ticketResponses
         );
-    }
-
-    public Page<BookingResponse> getMyBookings(Passenger currentUser, BookingStatus status, int page, int size) {
-        int safeSize = Math.min(size, 50);
-        Pageable pageable = PageRequest.of(page, safeSize);
-
-        Page<Booking> bookings = (status != null)
-                ? bookingRepository.findByPassenger_IdAndStatus(currentUser.getId(), status, pageable)
-                : bookingRepository.findByPassenger_Id(currentUser.getId(), pageable);
-
-        return bookings.map(b -> toBookingResponse(b, ticketRepository.findByBooking_Id(b.getId())));
-    }
-
-    public BookingResponse getMyBookingById(Long bookingId, Passenger currentUser) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new NotFoundException("Booking not found"));
-
-        // R8: ownership check — same error whether missing or not yours
-        if (!booking.getPassenger().getId().equals(currentUser.getId())) {
-            throw new NotFoundException("Booking not found");
-        }
-
-        List<Ticket> tickets = ticketRepository.findByBooking_Id(booking.getId());
-        return toBookingResponse(booking, tickets);
     }
 }

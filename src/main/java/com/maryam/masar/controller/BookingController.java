@@ -61,4 +61,15 @@ public class BookingController {
         BookingResponse response = bookingService.getMyBookingById(id, currentUser);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/operator")
+    @PreAuthorize("hasRole('OPERATOR')")
+    public ResponseEntity<Page<BookingResponse>> getOperatorBookings(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Passenger currentUser = userDetails.getPassenger();
+        Page<BookingResponse> bookings = bookingService.getBookingsForOperator(currentUser, page, size);
+        return ResponseEntity.ok(bookings);
+    }
 }
