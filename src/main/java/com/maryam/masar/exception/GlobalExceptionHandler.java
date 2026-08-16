@@ -50,6 +50,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex,
                                                           HttpServletRequest request) {
+
+
         ErrorResponse error = new ErrorResponse(
                 OffsetDateTime.now(),
                 request.getRequestURI(),
