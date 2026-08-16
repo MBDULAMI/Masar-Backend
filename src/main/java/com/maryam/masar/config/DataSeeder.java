@@ -38,30 +38,30 @@ public class DataSeeder implements CommandLineRunner {
 
         // --- Admin ---
         Passenger admin = new Passenger();
-        admin.setNationalId("0000000000");
+        admin.setNationalId("1000000001");
         admin.setFullName("MaryamD");
-        admin.setMobile("0500000000");
+        admin.setMobile("0500000001");
         admin.setEmail("admin@masar.com");
         admin.setPasswordHash(passwordEncoder.encode("admin123"));
         admin.setRole(Role.ADMIN);
         admin.setWalletBalance(BigDecimal.ZERO);
         passengerRepository.save(admin);
 
-        // --- 3 Operators (each needs an owning Passenger account) ---
-        Operator op1 = createOperator("owner1@masar.com", "Sendalah", "0511111111",
-                "1111111111", "Sendalah Railways", "SNDLH01");
-        Operator op2 = createOperator("owner2@masar.com", "Tuwaiq", "0522222222",
-                "2222222222", "Tuwaiq Transit Company", "TUWQ01");
-        Operator op3 = createOperator("owner3@masar.com", "NEOM", "0533333333",
-                "3333333333", "NEOM Rail Transport", "NEOM01");
+// --- 3 Operators (each needs an owning Passenger account) ---
+        Operator op1 = createOperator("owner1@masar.com", "Sendalah", "0511223344",
+                "1234567890", "Sendalah Railways", "SNDLH01");
+        Operator op2 = createOperator("owner2@masar.com", "Tuwaiq", "0522334455",
+                "1234567891", "Tuwaiq Transit Company", "TUWQ01");
+        Operator op3 = createOperator("owner3@masar.com", "NEOM", "0533445566",
+                "1234567892", "NEOM Rail Transport", "NEOM01");
 
-        // --- 3 Passengers with different wallet balances ---
-        createPassenger("passenger1@masar.com", "Latifah Zyad", "0544444444",
-                "4444444444", new BigDecimal("1000.00")); // plenty
-        createPassenger("passenger2@masar.com", "Omar Sh", "0555555555",
-                "5555555555", new BigDecimal("300.00")); // moderate
-        createPassenger("passenger3@masar.com", "Nehad Mohammed", "0566666666",
-                "6666666666", new BigDecimal("100.00")); // too low for a 4-seat booking at 150/seat
+// --- 3 Passengers with different wallet balances ---
+        createPassenger("passenger1@masar.com", "Latifah Zyad", "0544556677",
+                "2234567890", new BigDecimal("1000.00")); // plenty
+        createPassenger("passenger2@masar.com", "Omar Sh", "0555667788",
+                "2234567891", new BigDecimal("300.00")); // moderate
+        createPassenger("passenger3@masar.com", "Nehad Mohammed", "0566778899",
+                "2234567892", new BigDecimal("100.00")); // too low for a 4-seat booking at 150/seat
 
         // --- 4 cities used across trips ---
         String[] cities = {"Riyadh", "Hassa", "Jeddah", "Makkah"};

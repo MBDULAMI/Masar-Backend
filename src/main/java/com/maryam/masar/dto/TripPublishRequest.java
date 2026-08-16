@@ -1,9 +1,11 @@
 package com.maryam.masar.dto;
 
+import com.maryam.masar.validation.ValidTripTimes;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
+@ValidTripTimes
 public class TripPublishRequest {
 
     @NotBlank

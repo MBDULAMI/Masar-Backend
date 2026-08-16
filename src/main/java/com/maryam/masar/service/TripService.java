@@ -42,10 +42,8 @@ public class TripService {
         Operator operator = operatorRepository.findByOwner_Id(currentUser.getId())
                 .orElseThrow(() -> new IllegalArgumentException("No operator company found for this account"));
 
-        if (request.getArrivalTime().isBefore(request.getDepartureTime())
-                || request.getArrivalTime().isEqual(request.getDepartureTime())) {
-            throw new IllegalArgumentException("Arrival time must be after departure time");
-        }
+        // Arrival-after-departure is now enforced by @ValidTripTimes on TripPublishRequest
+        // (cross-field Bean Validation, checked before this method is ever called)
 
         Trip trip = new Trip();
         trip.setOperator(operator);
