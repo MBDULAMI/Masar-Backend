@@ -50,6 +50,27 @@ public class BookingService {
         this.operatorRepository = operatorRepository;
     }
 
+    @org.springframework.beans.factory.annotation.Value("${booking.cutoff-minutes}")
+    private int bookingCutoffMinutes;
+
+    @org.springframework.beans.factory.annotation.Value("${booking.min-seats}")
+    private int minSeats;
+
+    @org.springframework.beans.factory.annotation.Value("${booking.max-seats}")
+    private int maxSeats;
+
+    @org.springframework.beans.factory.annotation.Value("${refund.full-refund-hours}")
+    private int fullRefundHours;
+
+    @org.springframework.beans.factory.annotation.Value("${refund.partial-refund-hours}")
+    private int partialRefundHours;
+
+    @org.springframework.beans.factory.annotation.Value("${refund.full-refund-percentage}")
+    private BigDecimal fullRefundPercentage;
+
+    @org.springframework.beans.factory.annotation.Value("${refund.partial-refund-percentage}")
+    private BigDecimal partialRefundPercentage;
+
     @Transactional
     public BookingResponse createBooking(BookingRequest request, Passenger currentUser) {
         Trip trip = tripRepository.findById(request.getTripId())
@@ -59,7 +80,7 @@ public class BookingService {
         if (trip.getStatus() != TripStatus.SCHEDULED) {
             throw new ConflictException("Trip is not open for booking");
         }
-        OffsetDateTime cutoff = trip.getDepartureTime().minusMinutes(30);
+        OffsetDateTime cutoff = trip.getDepartureTime().minusMinutes(bookingCutoffMinutes);
         if (OffsetDateTime.now().isAfter(cutoff)) {
             throw new ConflictException("Booking is closed for this trip");
         }
@@ -180,10 +201,10 @@ public class BookingService {
             return BigDecimal.ZERO;
         }
         long minutesUntilDeparture = java.time.Duration.between(now, departureTime).toMinutes();
-        if (minutesUntilDeparture >= 24 * 60) {
-            return BigDecimal.ONE;
-        } else if (minutesUntilDeparture >= 2 * 60) {
-            return new BigDecimal("0.5");
+        if (minutesUntilDeparture >= fullRefundHours * 60L) {
+            return fullRefundPercentage;
+        } else if (minutesUntilDeparture >= partialRefundHours * 60L) {
+            return partialRefundPercentage;
         } else {
             return BigDecimal.ZERO;
         }
