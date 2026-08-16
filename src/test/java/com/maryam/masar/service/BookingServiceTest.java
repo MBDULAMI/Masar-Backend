@@ -105,4 +105,46 @@ class BookingServiceTest {
 
         assertThat(result).isEqualByComparingTo(BigDecimal.ZERO);
     }
+
+    @Test
+    void seats_exactlyEnough_allowsBooking() {
+        boolean result = bookingService.hasEnoughSeats(40, 38, 2);
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void seats_oneMoreThanAvailable_rejectsBooking() {
+        boolean result = bookingService.hasEnoughSeats(40, 38, 3);
+
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    void seats_plentyAvailable_allowsBooking() {
+        boolean result = bookingService.hasEnoughSeats(40, 5, 4);
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void seats_noneConfirmedYet_allowsFullBooking() {
+        boolean result = bookingService.hasEnoughSeats(40, 0, 4);
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void seats_tripFullyBooked_rejectsAnyRequest() {
+        boolean result = bookingService.hasEnoughSeats(40, 40, 1);
+
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    void seats_lastSeatAvailable_allowsSingleSeatBooking() {
+        boolean result = bookingService.hasEnoughSeats(40, 39, 1);
+
+        assertThat(result).isTrue();
+    }
 }

@@ -73,8 +73,7 @@ public class BookingService {
 
         // R1: seat availability
         int confirmedSeats = bookingRepository.sumConfirmedSeatsByTripId(trip.getId());
-        int availableSeats = trip.getTotalSeats() - confirmedSeats;
-        if (request.getSeatCount() > availableSeats) {
+        if (!hasEnoughSeats(trip.getTotalSeats(), confirmedSeats, request.getSeatCount())) {
             throw new ConflictException("Not enough seats available");
         }
 
@@ -188,6 +187,11 @@ public class BookingService {
         } else {
             return BigDecimal.ZERO;
         }
+    }
+
+    public boolean hasEnoughSeats(int totalSeats, int confirmedSeats, int requestedSeats) {
+        int availableSeats = totalSeats - confirmedSeats;
+        return requestedSeats <= availableSeats;
     }
 
     public Page<BookingResponse> getMyBookings(Passenger currentUser, BookingStatus status, int page, int size) {
