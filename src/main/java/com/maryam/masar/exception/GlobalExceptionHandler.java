@@ -1,0 +1,62 @@
+package com.maryam.masar.exception;
+
+import com.maryam.masar.dto.ErrorResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.time.OffsetDateTime;
+import java.util.List;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    // Handles @Valid failures on request DTOs (bad email format, blank fields, etc.)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex,
+                                                          HttpServletRequest request) {
+        List<ErrorResponse.FieldError> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
+                .map(fe -> new ErrorResponse.FieldError(fe.getField(), fe.getDefaultMessage()))
+                .toList();
+
+        ErrorResponse error = new ErrorResponse(
+                OffsetDateTime.now(),
+                request.getRequestURI(),
+                "VALIDATION_ERROR",
+                "One or more fields are invalid",
+                fieldErrors
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    // Handles business rule violations we throw ourselves (e.g. duplicate email, bad role)
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex,
+                                                               HttpServletRequest request) {
+        ErrorResponse error = new ErrorResponse(
+                OffsetDateTime.now(),
+                request.getRequestURI(),
+                "BAD_REQUEST",
+                ex.getMessage(),
+                null
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    // Catch-all safety net — never leak stack traces or internal details to the client
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex,
+                                                          HttpServletRequest request) {
+        ErrorResponse error = new ErrorResponse(
+                OffsetDateTime.now(),
+                request.getRequestURI(),
+                "INTERNAL_ERROR",
+                "An unexpected error occurred",
+                null
+        );
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+}
