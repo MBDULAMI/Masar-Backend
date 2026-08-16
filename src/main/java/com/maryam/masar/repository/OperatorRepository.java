@@ -6,4 +6,5 @@ import java.util.Optional;
 
 public interface OperatorRepository extends JpaRepository<Operator, Long> {
     Optional<Operator> findByCode(String code);
+    Optional<Operator> findByOwner_Id(Long ownerId);
 }
