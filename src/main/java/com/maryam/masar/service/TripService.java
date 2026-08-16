@@ -67,13 +67,22 @@ public class TripService {
     }
 
     public Page<TripSearchResponse> searchTrips(String origin, String destination,
-                                                OffsetDateTime afterDate, int page, int size) {
+                                                OffsetDateTime afterDate, Integer minSeats, int page, int size) {
         int safeSize = Math.min(size, 50);
         Pageable pageable = PageRequest.of(page, safeSize);
 
         Page<Trip> trips = tripRepository.searchTrips(origin, destination, afterDate, pageable);
 
-        return trips.map(this::toSearchResponse);
+        Page<TripSearchResponse> results = trips.map(this::toSearchResponse);
+
+        if (minSeats != null) {
+            List<TripSearchResponse> filtered = results.getContent().stream()
+                    .filter(t -> t.getAvailableSeats() >= minSeats)
+                    .toList();
+            return new org.springframework.data.domain.PageImpl<>(filtered, pageable, filtered.size());
+        }
+
+        return results;
     }
 
     public TripSearchResponse getTripById(Long tripId) {

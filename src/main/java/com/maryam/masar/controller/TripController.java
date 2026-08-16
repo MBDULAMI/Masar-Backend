@@ -39,9 +39,10 @@ public class TripController {
             @RequestParam(required = false) String origin,
             @RequestParam(required = false) String destination,
             @RequestParam(required = false) OffsetDateTime afterDate,
+            @RequestParam(required = false) Integer minSeats,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Page<TripSearchResponse> results = tripService.searchTrips(origin, destination, afterDate, page, size);
+        Page<TripSearchResponse> results = tripService.searchTrips(origin, destination, afterDate, minSeats, page, size);
         return ResponseEntity.ok(results);
     }
 
