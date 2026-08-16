@@ -22,13 +22,13 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public String generateToken(Long passengerId, String email, String role) {
+    public String generateToken(Long accountId, String email, String role) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expirationMs);
 
         return Jwts.builder()
                 .subject(email)
-                .claim("passengerId", passengerId)
+                .claim("accountId", accountId)
                 .claim("role", role)
                 .issuedAt(now)
                 .expiration(expiry)
@@ -40,9 +40,9 @@ public class JwtUtil {
         return extractAllClaims(token).getSubject();
     }
 
-    public Long extractPassengerId(String token) {
+    public Long extractAccountId(String token) {
         Claims claims = extractAllClaims(token);
-        return claims.get("passengerId", Long.class);
+        return claims.get("accountId", Long.class);
     }
 
     public String extractRole(String token) {

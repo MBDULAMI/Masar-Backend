@@ -82,4 +82,30 @@ public class GlobalExceptionHandler {
                 "UNPROCESSABLE_ENTITY", ex.getMessage(), null);
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error);
     }
+
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(org.springframework.security.access.AccessDeniedException ex,
+                                                            HttpServletRequest request) {
+        ErrorResponse error = new ErrorResponse(
+                OffsetDateTime.now(),
+                request.getRequestURI(),
+                "FORBIDDEN",
+                "You do not have permission to perform this action",
+                null
+        );
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex,
+                                                            HttpServletRequest request) {
+        ErrorResponse error = new ErrorResponse(
+                OffsetDateTime.now(),
+                request.getRequestURI(),
+                "VALIDATION_ERROR",
+                "Invalid value for parameter: " + ex.getName(),
+                null
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
 }
