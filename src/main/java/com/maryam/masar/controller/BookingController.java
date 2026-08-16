@@ -29,4 +29,13 @@ public class BookingController {
         BookingResponse response = bookingService.createBooking(request, currentUser);
         return ResponseEntity.status(201).body(response);
     }
+
+    @PostMapping("/{id}/cancel")
+    @PreAuthorize("hasRole('PASSENGER')")
+    public ResponseEntity<BookingResponse> cancelBooking(@PathVariable Long id,
+                                                         @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Passenger currentUser = userDetails.getPassenger();
+        BookingResponse response = bookingService.cancelBooking(id, currentUser);
+        return ResponseEntity.ok(response);
+    }
 }

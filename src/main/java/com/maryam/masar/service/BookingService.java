@@ -117,6 +117,66 @@ public class BookingService {
 
         return toBookingResponse(savedBooking, tickets);
     }
+    @Transactional
+    public BookingResponse cancelBooking(Long bookingId, Passenger currentUser) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new NotFoundException("Booking not found"));
+
+        // R8: ownership check — same error whether missing or not yours
+        if (!booking.getPassenger().getId().equals(currentUser.getId())) {
+            throw new NotFoundException("Booking not found");
+        }
+
+        if (booking.getStatus() != BookingStatus.CONFIRMED) {
+            throw new ConflictException("Booking is not in a cancellable state");
+        }
+
+        Trip trip = booking.getTrip();
+        OffsetDateTime now = OffsetDateTime.now();
+
+        // R5: refund tiers by time remaining before departure
+        BigDecimal refundPercentage;
+        if (now.isAfter(trip.getDepartureTime())) {
+            refundPercentage = BigDecimal.ZERO;
+        } else {
+            long minutesUntilDeparture = java.time.Duration.between(now, trip.getDepartureTime()).toMinutes();
+            if (minutesUntilDeparture >= 24 * 60) {
+                refundPercentage = BigDecimal.ONE;
+            } else if (minutesUntilDeparture >= 2 * 60) {
+                refundPercentage = new BigDecimal("0.5");
+            } else {
+                refundPercentage = BigDecimal.ZERO;
+            }
+        }
+
+        BigDecimal refundAmount = booking.getTotalAmount()
+                .multiply(refundPercentage)
+                .setScale(2, java.math.RoundingMode.HALF_UP);
+
+        // R6: cancelling releases seats immediately — handled automatically since
+        // availableSeats is always computed live from CONFIRMED bookings only
+        booking.setStatus(BookingStatus.CANCELLED);
+        booking.setUpdatedAt(now);
+        Booking savedBooking = bookingRepository.save(booking);
+
+        // Credit refund to wallet, even if 0 — still logged for a full audit trail
+        Passenger passenger = booking.getPassenger();
+        BigDecimal newBalance = passenger.getWalletBalance().add(refundAmount);
+        passenger.setWalletBalance(newBalance);
+        passengerRepository.save(passenger);
+
+        WalletTransaction refundTransaction = new WalletTransaction();
+        refundTransaction.setType(TransactionType.REFUND);
+        refundTransaction.setAmount(refundAmount);
+        refundTransaction.setBalanceAfter(newBalance);
+        refundTransaction.setPassenger(passenger);
+        refundTransaction.setBooking(savedBooking);
+        refundTransaction.setCreatedAt(now);
+        walletTransactionRepository.save(refundTransaction);
+
+        List<Ticket> tickets = ticketRepository.findByBooking_Id(savedBooking.getId());
+        return toBookingResponse(savedBooking, tickets);
+    }
 
     private String generateReference() {
         StringBuilder sb = new StringBuilder("MSR-");
