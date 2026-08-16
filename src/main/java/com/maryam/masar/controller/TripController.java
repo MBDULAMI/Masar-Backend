@@ -49,4 +49,13 @@ public class TripController {
     public ResponseEntity<TripSearchResponse> getTrip(@PathVariable Long id) {
         return ResponseEntity.ok(tripService.getTripById(id));
     }
+
+    @PostMapping("/{id}/cancel")
+    @PreAuthorize("hasRole('OPERATOR')")
+    public ResponseEntity<TripResponse> cancelTrip(@PathVariable Long id,
+                                                   @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Passenger currentUser = userDetails.getPassenger();
+        TripResponse response = tripService.cancelTrip(id, currentUser);
+        return ResponseEntity.ok(response);
+    }
 }
