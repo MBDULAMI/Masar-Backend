@@ -26,6 +26,11 @@ public class RegisterRequest {
     @NotBlank
     private String role; // "PASSENGER" or "OPERATOR" only — ADMIN rejected in service layer (R10)
 
+    // Only required when role = OPERATOR — checked manually in AuthService, not @NotBlank here,
+    // since these fields don't apply to PASSENGER registrations.
+    private String companyName;
+    private String companyCode;
+
     public RegisterRequest() {}
 
     public String getNationalId() {
@@ -74,5 +79,21 @@ public class RegisterRequest {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getCompanyName() {
+        return companyName;
+    }
+
+    public void setCompanyName(String companyName) {
+        this.companyName = companyName;
+    }
+
+    public String getCompanyCode() {
+        return companyCode;
+    }
+
+    public void setCompanyCode(String companyCode) {
+        this.companyCode = companyCode;
     }
 }

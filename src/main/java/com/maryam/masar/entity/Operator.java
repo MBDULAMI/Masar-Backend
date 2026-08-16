@@ -20,6 +20,10 @@ public class Operator {
     @Column(nullable = false)
     private OperatorStatus status;
 
+    @OneToOne
+    @JoinColumn(name = "owner_passenger_id", nullable = false, unique = true)
+    private Passenger owner;
+
     public Long getId() {
         return id;
     }
@@ -50,5 +54,13 @@ public class Operator {
 
     public void setStatus(OperatorStatus status) {
         this.status = status;
+    }
+
+    public Passenger getOwner() {
+        return owner;
+    }
+
+    public void setOwner(Passenger owner) {
+        this.owner = owner;
     }
 }
