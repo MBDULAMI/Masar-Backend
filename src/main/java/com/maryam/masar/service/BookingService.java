@@ -145,19 +145,7 @@ public class BookingService {
         OffsetDateTime now = OffsetDateTime.now();
 
         // R5: refund tiers by time remaining before departure
-        BigDecimal refundPercentage;
-        if (now.isAfter(trip.getDepartureTime())) {
-            refundPercentage = BigDecimal.ZERO;
-        } else {
-            long minutesUntilDeparture = java.time.Duration.between(now, trip.getDepartureTime()).toMinutes();
-            if (minutesUntilDeparture >= 24 * 60) {
-                refundPercentage = BigDecimal.ONE;
-            } else if (minutesUntilDeparture >= 2 * 60) {
-                refundPercentage = new BigDecimal("0.5");
-            } else {
-                refundPercentage = BigDecimal.ZERO;
-            }
-        }
+        BigDecimal refundPercentage = calculateRefundPercentage(now, trip.getDepartureTime());
 
         BigDecimal refundAmount = booking.getTotalAmount()
                 .multiply(refundPercentage)
@@ -186,6 +174,20 @@ public class BookingService {
 
         List<Ticket> tickets = ticketRepository.findByBooking_Id(savedBooking.getId());
         return toBookingResponse(savedBooking, tickets);
+    }
+
+    public BigDecimal calculateRefundPercentage(OffsetDateTime now, OffsetDateTime departureTime) {
+        if (now.isAfter(departureTime)) {
+            return BigDecimal.ZERO;
+        }
+        long minutesUntilDeparture = java.time.Duration.between(now, departureTime).toMinutes();
+        if (minutesUntilDeparture >= 24 * 60) {
+            return BigDecimal.ONE;
+        } else if (minutesUntilDeparture >= 2 * 60) {
+            return new BigDecimal("0.5");
+        } else {
+            return BigDecimal.ZERO;
+        }
     }
 
     public Page<BookingResponse> getMyBookings(Passenger currentUser, BookingStatus status, int page, int size) {
