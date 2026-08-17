@@ -7,7 +7,7 @@ import com.maryam.masar.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import java.net.URI;
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
@@ -21,7 +21,8 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         AuthResponse response = authService.register(request);
-        return ResponseEntity.status(201).body(response);
+        URI location = URI.create("/api/v1/auth/" + response.getAccountId());
+        return ResponseEntity.created(location).body(response);
     }
 
     @PostMapping("/login")

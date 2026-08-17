@@ -12,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
+import java.net.URI;
 import java.time.OffsetDateTime;
 
 @RestController
@@ -31,7 +31,8 @@ public class TripController {
                                                     @AuthenticationPrincipal CustomUserDetails userDetails) {
         Passenger currentUser = userDetails.getPassenger();
         TripResponse response = tripService.publishTrip(request, currentUser);
-        return ResponseEntity.status(201).body(response);
+        URI location = URI.create("/api/v1/trips/" + response.getId());
+        return ResponseEntity.created(location).body(response);
     }
 
     @GetMapping
@@ -46,11 +47,6 @@ public class TripController {
         return ResponseEntity.ok(results);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<TripSearchResponse> getTrip(@PathVariable Long id) {
-        return ResponseEntity.ok(tripService.getTripById(id));
-    }
-
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasRole('OPERATOR')")
     public ResponseEntity<TripResponse> cancelTrip(@PathVariable Long id,
@@ -58,5 +54,10 @@ public class TripController {
         Passenger currentUser = userDetails.getPassenger();
         TripResponse response = tripService.cancelTrip(id, currentUser);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<TripSearchResponse> getTrip(@PathVariable Long id) {
+        return ResponseEntity.ok(tripService.getTripById(id));
     }
 }

@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
+import java.net.URI;
 import com.maryam.masar.entity.BookingStatus;
 import org.springframework.data.domain.Page;
 @RestController
@@ -29,7 +29,8 @@ public class BookingController {
                                                          @AuthenticationPrincipal CustomUserDetails userDetails) {
         Passenger currentUser = userDetails.getPassenger();
         BookingResponse response = bookingService.createBooking(request, currentUser);
-        return ResponseEntity.status(201).body(response);
+        URI location = URI.create("/api/v1/bookings/" + response.getId());
+        return ResponseEntity.created(location).body(response);
     }
 
     @PostMapping("/{id}/cancel")

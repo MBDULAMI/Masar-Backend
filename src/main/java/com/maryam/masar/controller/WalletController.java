@@ -7,7 +7,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
+import java.net.URI;
 @RestController
 @RequestMapping("/api/v1/admin/wallet")
 public class WalletController {
@@ -22,6 +22,7 @@ public class WalletController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<WalletTransactionResponse> topUp(@Valid @RequestBody TopUpRequest request) {
         WalletTransactionResponse response = walletService.topUp(request);
-        return ResponseEntity.status(201).body(response);
+        URI location = URI.create("/api/v1/wallet/history/" + response.getId());
+        return ResponseEntity.created(location).body(response);
     }
 }
