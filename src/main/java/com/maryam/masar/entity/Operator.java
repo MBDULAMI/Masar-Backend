@@ -20,7 +20,7 @@ public class Operator {
     @Column(nullable = false)
     private OperatorStatus status;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_passenger_id", nullable = false, unique = true)
     private Passenger owner;
 
