@@ -1,7 +1,7 @@
 
 # Masar — Bus Ticket Booking API
 
-Backend REST API for Masar, a bus ticket booking system. Built as a technical case study for the Senior Developer role at Elm.
+Backend REST API for Masar, a bus ticket booking system. [Case Study for Elm]
 
 ## Tech Stack
 
@@ -82,6 +82,24 @@ To test authenticated endpoints in Swagger UI:
 3. Click the **Authorize** button (top right) and paste the token
 4. All subsequent requests in Swagger UI will include the token automatically
 
+## Postman Collection
+
+`Masar.postman_collection.json` (project root) covers the happy path (login → search → book → view booking) plus the three required failure paths:
+- Sold-out trip → `409 Conflict`
+- Insufficient wallet balance → `422 Unprocessable Entity`
+- Another passenger's booking (R8) → `404 Not Found` (not 403 — ownership is never revealed to a non-owner)
+
+Import into Postman and run folders in order (1 → 2 → 3 → 4); each request has built-in test assertions on status codes, so "Run collection" gives a pass/fail summary for all 12 checks at once.
+
+## Configuration & Profiles
+
+Config is split across three files in `src/main/resources/`:
+- `application.properties` — shared defaults (active profile, JWT settings, refund/booking business values)
+- `application-dev.properties` — local development (H2 console enabled)
+- `application-prod.properties` — production (H2 console disabled; `JWT_SECRET` environment variable is required with no fallback, so the app refuses to start with an insecure default secret)
+
+The active profile defaults to `dev`, so running the app normally needs no extra setup. Refund thresholds (24h/2h tiers and their percentages), the booking cutoff (30 minutes before departure), and seat limits are externalized as properties rather than hardcoded.
+
 ## Clone to First Successful Booking — Step by Step
 
 1. Clone the repo and run `mvn spring-boot:run`
@@ -130,10 +148,6 @@ Test coverage includes:
 - Unit tests covering R1 seat availability logic
 - Integration tests (MockMvc/@SpringBootTest) covering unauthenticated access rejection and R8 ownership enforcement
 
-## API Testing
-
-All endpoints are documented and directly testable via Swagger UI (see above) — no separate Postman collection is required, though the OpenAPI JSON at `/v3/api-docs` can be imported into Postman if preferred.
-
 ## Deliverables Checklist (per case study Section 6)
 
 - [x] Source code — public Git repository, incremental commit history
@@ -154,8 +168,8 @@ src/main/java/com/maryam/masar/
 ├── exception/       # Custom exceptions + global handler
 ├── repository/      # Spring Data repositories
 ├── security/        # JWT, Spring Security config
-├── service/          # Business logic
-└── validation/        # Custom Bean Validation constraints
+├── service/         # Business logic
+└── validation/      # Custom Bean Validation constraints
 
 src/main/resources/
 ├── db/migration/    # Flyway SQL migrations
